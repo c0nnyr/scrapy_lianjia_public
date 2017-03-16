@@ -7,9 +7,9 @@
 
 import scrapy
 
-class CommunityItem(scrapy.Item):
+class HouseItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
+    name = scrapy.Field()
     title = scrapy.Field()
     link = scrapy.Field()
     total_price = scrapy.Field()
