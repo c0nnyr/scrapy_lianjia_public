@@ -14,3 +14,7 @@ class HouseItem(scrapy.Item):
     link = scrapy.Field()
     total_price = scrapy.Field()
     price_per_m = scrapy.Field()
+    cityId = scrapy.Field()
+
+    def __init__(self, dct):
+        super(HouseItem, self).__init__((k, v) for k, v in dct.iteritems() if k in self.fields)
