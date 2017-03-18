@@ -1454,9 +1454,9 @@ var LjUserTrack = {
 '''
 
 import re
-pattern = r'''require\(\['ershoufang/sellDetail/detailV3'\],function\(init\)\{\s*init\(((\s|\S)*?)\);\s*\}\);'''
+pattern = r'''require\(\['ershoufang/sellDetail/detailV3'\],function\(init\)\{\s*init\((?P<extract>(\s|\S)*?)\);\s*\}\);'''
 item = re.search(pattern, txt)
-target_content = item.group(1)#group(2)是第二组括号最后匹配的东西,也就是\s|\S最后匹配的'}'
+target_content = item.group('extract')#group(2)是第二组括号最后匹配的东西,也就是\s|\S最后匹配的'}'
 pattern = r'^(\s*?)(\w*?)(:)'
 target_content = re.sub(pattern, r'\1"\2"\3', target_content, flags=re.M)#多行模式
 target_content = target_content.replace("'", '"')
