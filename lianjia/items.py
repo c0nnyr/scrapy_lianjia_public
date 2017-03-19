@@ -6,51 +6,77 @@
 # http://doc.scrapy.org/en/latest/topics/items.html
 
 import scrapy
+import datetime, os
+from sqlalchemy import Column, Integer, String, Text, Float, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
-class LianJiaItem(scrapy.Item):
-    url = scrapy.Field()
+Model = declarative_base(name='Model')
+
+class LianJiaItem(dict):
+    scrapy_time = scrapy.Field()
+
+    url = Column(Text())
+    original_data = Column(Text())
+    date = Column(Text(), primary_key=True)
+
     FILTER_DATA_MAP = {
         #lianjia_item, house_item
     }
-    original_data = scrapy.Field()
+
+    def __init__(self):
+        super(LianJiaItem, self).__init__()
+        self.date = self.get_today_str()
+        self['scrapy_time'] = self.date
+
+    @staticmethod
+    def get_today_str():
+        return datetime.date.today().strftime('%y-%m-%d')
 
     def set_basic_data(self, dct):
         for k, v in dct.iteritems():
             if k in self.FILTER_DATA_MAP:
-                self[self.FILTER_DATA_MAP[k]] = v
-        self['original_data'] = dct.copy()
+                setattr(self, self.FILTER_DATA_MAP[k], v)
+        self.original_data = str(dct)
 
     def set_url(self, url):
-        self['url'] = url
+        self.url = url
 
-class CommunityItem(LianJiaItem):
-    resblock_id = scrapy.Field()
-    house_count_on_sale = scrapy.Field()
-    house_ids_on_sale = scrapy.Field()
-    uuid = scrapy.Field()
+class CommunityItem(Model, LianJiaItem):
+    __tablename__ = 'community'
+    id = Column(Integer(), primary_key=True)
+    house_count_on_sale = Column(Integer())
+    house_ids_on_sale = Column(Text())
+    uuid = Column(Text())
 
     FILTER_DATA_MAP = {
         #lianjia_item, house_item
-        'cid':'resblock_id',
+        'cid':'id',
         'count':'house_count_on_sale',
         'ids':'house_ids_on_sale',
         'uuid':'uuid',
     }
 
-class HouseItem(LianJiaItem):
-    house_type = scrapy.Field()
-    house_size = scrapy.Field()
-    register_time = scrapy.Field()
-    total_price = scrapy.Field()
-    price = scrapy.Field()
-    house_id = scrapy.Field()
-    resblock_id = scrapy.Field()
-    resblock_name = scrapy.Field()
-    is_removed = scrapy.Field()
-    resblock_position = scrapy.Field()
-    city_id = scrapy.Field()
-    title = scrapy.Field()
-    uuid = scrapy.Field()
+    def __init__(self):
+        Model.__init__(self)
+        LianJiaItem.__init__(self)
+
+class HouseItem(Model, LianJiaItem):
+    __tablename__ = 'house'
+
+    house_type = Column(Text())
+    house_size = Column(Float())
+    register_time = Column(Text())
+    total_price = Column(Integer())
+    price = Column(Float())
+    id = Column(Integer(), primary_key=True)
+    resblock_id = Column(Integer())
+    resblock_name = Column(Text())
+    is_removed = Column(Integer())
+    resblock_position = Column(Text())
+    city_id = Column(Integer())
+    title = Column(Text())
+    uuid = Column(Text())
 
     FILTER_DATA_MAP = {
         #lianjia_item, house_item
@@ -59,7 +85,7 @@ class HouseItem(LianJiaItem):
         'registerTime':'register_time',
         'totalPrice':'total_price',
         'price':'price',
-        'houseId':'house_id',
+        'houseId':'id',
         'resblockId':'resblock_id',
         'resblockName':'resblock_name',
         'isRemove':'is_removed',
@@ -69,3 +95,22 @@ class HouseItem(LianJiaItem):
         'title':'title',
     }
 
+    def __init__(self):
+        Model.__init__(self)
+        LianJiaItem.__init__(self)
+
+class HouseStateItem(Model, LianJiaItem):
+    __tablename__ = 'house_state'
+
+    id = Column(Integer(), primary_key=True)
+    see_count = Column(Integer())
+
+    FILTER_DATA_MAP = {
+        #lianjia_item, house_item
+        'id':'id',
+        'see_count':'see_count',
+    }
+
+    def __init__(self):
+        Model.__init__(self)
+        LianJiaItem.__init__(self)
