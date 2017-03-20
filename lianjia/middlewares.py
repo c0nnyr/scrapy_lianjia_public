@@ -90,5 +90,6 @@ class LianjiaSpiderMiddleware(object):
         spider.logger.info('Spider opened: %s' % spider.name)
 
 class LianJiaDownloaderMiddleware(object):
+
     def process_request(self, request, spider):
         request.headers.setdefault('User-Agent', random.choice(USER_AGENTS))

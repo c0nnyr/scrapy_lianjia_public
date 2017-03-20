@@ -9,31 +9,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import items
 
-#Model = declarative_base(name='Model')
-#
-#class HouseItemModel(Model):
-#    __tablename__ = 'house'
-#    id = Column(Integer, primary_key=True)
-#
-#   # house_type = scrapy.Field()
-#   # house_size = scrapy.Field()
-#   # register_time = scrapy.Field()
-#   # total_price = scrapy.Field()
-#    price = Column(Integer)
-#    house_id = Column(String(20))
-#   # resblock_id = scrapy.Field()
-#   # resblock_name = scrapy.Field()
-#   # is_removed = scrapy.Field()
-#   # resblock_position = scrapy.Field()
-#   # city_id = scrapy.Field()
-#   # title = scrapy.Field()
-#   # uuid = scrapy.Field()
-#
-#    def __init__(self, item):
-#        super(HouseItemModel, self).__init__()
-#        self.price = item['price']
-#        self.house_id = item['house_id']
-
 class LianjiaPipeline(object):
 
     def open_spider(self, spider):
@@ -42,15 +17,20 @@ class LianjiaPipeline(object):
         session_marker = sessionmaker(bind=self.engine)
         self.session = session_marker()
 
+        self.json_file = open('data.json', 'w')
+
     def close_spider(self, spider):
         self.session.close()
+        self.json_file.close()
 
     def process_item(self, item, spider):
-        #cls = item.__class__
-        #if self.session.query(cls).filter(cls.id==item.id and cls.date==item.id).count():
-        #    self.session.update(item)
-        #else:
-        #    self.session.add(item)
-        self.session.merge(item)
-        self.session.commit()
+        #保存数据库
+        # self.session.merge(item)
+        # self.session.commit()
+
+        #保存json文件
+        # self.json_file.write(item.original_data)
+        # self.json_file.write('\n')
+        # self.json_file.flush()
+
         return item
