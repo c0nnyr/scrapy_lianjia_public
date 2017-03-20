@@ -35,10 +35,24 @@ class CommunitySpider(scrapy.Spider):
 				return
 			dct = self._handle_js_object(search_result.group('extract'))
 
-			community = items.CommunityItem()
-			community.set_basic_data(dct)
-			community.set_url(response.url)
+			community = items.CommunityItem(
+				house_count_on_sale=dct['count'],
+				house_ids_on_sale=dct['ids'],
+				uuid=dct['uuid'],
 
+				id=dct['cid'],
+				url=response.url,
+				original_data=str(dct),
+			)
+			community.init(
+				house_count_on_sale=dct['count'],
+				house_ids_on_sale=dct['ids'],
+				uuid=dct['uuid'],
+
+				id=dct['cid'],
+				url=response.url,
+				original_data=str(dct),
+			)
 			return community
 
 		community_item = handle_community()
@@ -71,9 +85,24 @@ class CommunitySpider(scrapy.Spider):
 			print 'cj==>cannot succesfully extract house item'
 			return
 		dct = self._handle_js_object(search_result.group('extract'))
-		house = items.HouseItem()
-		house.set_basic_data(dct)
-		house.set_url(response.url)
+		house = items.HouseItem(
+			house_type=dct['houseType'],
+			house_size=dct['area'],
+			register_time=dct['registerTime'],
+			total_price=dct['totalPrice'],
+			price=dct['price'],
+			resblock_id=dct['resblockId'],
+			resblock_name=dct['resblockName'],
+			is_removed=dct['isRemove'],
+			resblock_position=dct['resblockPosition'],
+			city_id=dct['cityId'],
+			uuid=dct['uuid'],
+			title=dct['title'],
+
+			id=dct['houseId'],
+			url=response.url,
+			original_data=str(dct),
+		)
 		return house
 
 	def parse_house_state_1(self, response):
@@ -82,9 +111,13 @@ class CommunitySpider(scrapy.Spider):
 		dct = json.loads(response.body)
 		dct['id'] = hid
 		dct['see_count'] = dct['data']['seeRecord']['totalCnt']
-		state = items.HouseStateItem()
-		state.set_basic_data(dct)
-		state.set_url(response.url)
+		state = items.HouseStateItem(
+			see_count=dct['see_count'],
+
+			id=dct['id'],
+			url=response.url,
+			original_data=str(dct),
+		)
 		return state
 
 	@staticmethod

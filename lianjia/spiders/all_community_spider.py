@@ -39,7 +39,7 @@ class AllCommunitySpider(scrapy.Spider):
 			#正式开始解析
 			community_sel_items = response.xpath(community_xpath)
 			for sel in community_sel_items:
-				community_item = {}
+				dct = {}
 				for attr, item in community_attr_map.iteritems():
 					xpath, re_filter, default = item
 					content = ''.join(sel.xpath(xpath).extract())#对于year_built，有多项
@@ -48,10 +48,21 @@ class AllCommunitySpider(scrapy.Spider):
 							content = re.search(re_filter, content).group('extract')
 						except:
 							content = default
-					community_item[attr] = content
-				original_community_item = items.OriginalCommunityItem()
-				original_community_item.set_basic_data(community_item)
-				original_community_item.set_url(response.url)
+					dct[attr] = content
+				original_community_item = items.OriginalCommunityItem(
+					title=dct['title'],
+					count_on_sale=dct['count_on_sale'],
+					price_per_sm=dct['price_per_sm'],
+					count_on_rent=dct['count_on_rent'],
+					count_sold_90days=dct['count_sold_90days'],
+					district=dct['district'],
+					bizcircle=dct['bizcircle'],
+					year_built=dct['year_built'],
+
+					id=dct['id'],
+					url=response.url,
+					original_data=str(dct),
+				)
 				yield original_community_item
 
 		for item in handle():
