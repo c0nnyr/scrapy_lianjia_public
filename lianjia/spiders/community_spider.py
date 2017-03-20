@@ -49,10 +49,9 @@ class CommunitySpider(scrapy.Spider):
 		def handle_house(self=self, response=response):
 			house_url_xpath = '/html/body/div[4]/div[1]/ul/li/div[1]/div[1]/a/@href'
 			for url in response.xpath(house_url_xpath).extract():
-				yield Request(url=url, callback=self.parse_house)
+				yield Request(url=url, callback=self.parse_house_1)
 				hid = re.search(r'\d+', url).group(0)
-				yield Request(url=self.HOURSE_STATE_URL.format(rid=self.rid, hid=hid), callback=self.parse_house_state, meta={'hid':hid})
-
+				yield Request(url=self.HOURSE_STATE_URL.format(rid=self.rid, hid=hid), callback=self.parse_house_state_1, meta={'hid':hid})
 		for item in handle_house():
 			yield item
 
@@ -65,8 +64,7 @@ class CommunitySpider(scrapy.Spider):
 		for r in handle_continue_community():
 			yield r
 
-
-	def parse_house(self, response):
+	def parse_house_1(self, response):
 		print 'parsing house', response.url
 		search_result = re.search(self.HOUSE_ITEM_INFO_RE, response.body)
 		if not search_result:
@@ -78,7 +76,7 @@ class CommunitySpider(scrapy.Spider):
 		house.set_url(response.url)
 		return house
 
-	def parse_house_state(self, response):
+	def parse_house_state_1(self, response):
 		print 'parsing house state', response.url
 		hid = response.meta['hid']
 		dct = json.loads(response.body)
