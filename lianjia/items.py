@@ -14,6 +14,8 @@ from sqlalchemy.ext.declarative import declarative_base
 Model = declarative_base(name='Model')
 
 class LianJiaItem(dict):
+    scrapy_time = scrapy.Field()#必须有一个这个,否则就会当做没有item,中断掉
+
     url = Column(Text())
     original_data = Column(Text())
     date = Column(Text(), primary_key=True)
@@ -22,8 +24,7 @@ class LianJiaItem(dict):
     def __init__(self, **kwargs):
         super(LianJiaItem, self).__init__()
         self.date = self.get_today_str()
-
-    def init(self, **kwargs):
+        self['scrapy_time'] = self.get_today_str()
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
 
@@ -31,19 +32,14 @@ class LianJiaItem(dict):
     def get_today_str():
         return datetime.date.today().strftime('%y-%m-%d')
 
-class CommunityItem(Model, LianJiaItem):
+class CommunityItem(LianJiaItem, Model):
     __tablename__ = 'community'
 
     house_count_on_sale = Column(Integer())
     house_ids_on_sale = Column(Text())
     uuid = Column(Text())
 
-    def __init__(self, **kwargs):
-        Model.__init__(self)
-        LianJiaItem.__init__(self, **kwargs)
-
-
-class HouseItem(Model, LianJiaItem):
+class HouseItem(LianJiaItem, Model):
     __tablename__ = 'house'
 
     house_type = Column(Text())
@@ -60,19 +56,11 @@ class HouseItem(Model, LianJiaItem):
     title = Column(Text())
     uuid = Column(Text())
 
-    def __init__(self, **kwargs):
-        Model.__init__(self)
-        LianJiaItem.__init__(self, **kwargs)
-
-class HouseStateItem(Model, LianJiaItem):
+class HouseStateItem(LianJiaItem, Model):
     __tablename__ = 'house_state'
     see_count = Column(Integer())
 
-    def __init__(self, **kwargs):
-        Model.__init__(self)
-        LianJiaItem.__init__(self, **kwargs)
-
-class OriginalCommunityItem(Model, LianJiaItem):
+class OriginalCommunityItem(LianJiaItem, Model):
     __tablename__ = 'original_community'
     title = Column(Text())
     count_on_sale = Column(Integer())
@@ -82,7 +70,3 @@ class OriginalCommunityItem(Model, LianJiaItem):
     district = Column(Text())
     bizcircle = Column(Text())
     year_built = Column(Integer())
-
-    def __init__(self, **kwargs):
-        Model.__init__(self)
-        LianJiaItem.__init__(self, **kwargs)

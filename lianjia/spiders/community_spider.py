@@ -44,15 +44,6 @@ class CommunitySpider(scrapy.Spider):
 				url=response.url,
 				original_data=str(dct),
 			)
-			community.init(
-				house_count_on_sale=dct['count'],
-				house_ids_on_sale=dct['ids'],
-				uuid=dct['uuid'],
-
-				id=dct['cid'],
-				url=response.url,
-				original_data=str(dct),
-			)
 			return community
 
 		community_item = handle_community()
