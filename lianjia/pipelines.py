@@ -25,12 +25,12 @@ class LianjiaPipeline(object):
 
     def process_item(self, item, spider):
         #保存数据库
-        # self.session.merge(item)
-        # self.session.commit()
+        self.session.merge(item)
+        self.session.commit()
 
         #保存json文件
-        # self.json_file.write(item.original_data)
-        # self.json_file.write('\n')
-        # self.json_file.flush()
+        self.json_file.write(item.original_data)
+        self.json_file.write('\n')
+        self.json_file.flush()
 
         return item

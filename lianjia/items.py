@@ -19,6 +19,7 @@ class LianJiaItem(dict):
     url = Column(Text())
     original_data = Column(Text())
     date = Column(Text(), primary_key=True)
+    id = Column(Integer(), primary_key=True)
 
     FILTER_DATA_MAP = {
         #lianjia_item, house_item
@@ -44,7 +45,6 @@ class LianJiaItem(dict):
 
 class CommunityItem(Model, LianJiaItem):
     __tablename__ = 'community'
-    id = Column(Integer(), primary_key=True)
     house_count_on_sale = Column(Integer())
     house_ids_on_sale = Column(Text())
     uuid = Column(Text())
@@ -102,7 +102,6 @@ class HouseItem(Model, LianJiaItem):
 class HouseStateItem(Model, LianJiaItem):
     __tablename__ = 'house_state'
 
-    id = Column(Integer(), primary_key=True)
     see_count = Column(Integer())
 
     FILTER_DATA_MAP = {
@@ -114,3 +113,33 @@ class HouseStateItem(Model, LianJiaItem):
     def __init__(self):
         Model.__init__(self)
         LianJiaItem.__init__(self)
+
+
+class OriginalCommunityItem(Model, LianJiaItem):
+    __tablename__ = 'original_community'
+    title = Column(Text())
+    count_on_sale = Column(Integer())
+    price_per_sm = Column(Float())
+    count_on_rent = Column(Integer())
+    count_sold_90days = Column(Integer())
+    district = Column(Text())
+    bizcircle = Column(Text())
+    year_built = Column(Integer())
+
+    FILTER_DATA_MAP = {
+        #lianjia_item, house_item
+        'id':'id',
+        'title':'title',
+        'count_on_sale':'count_on_sale',
+        'price_per_sm':'price_per_sm',
+        'count_on_rent':'count_on_rent',
+        'count_sold_90days':'count_sold_90days',
+        'district':'district',
+        'bizcircle':'bizcircle',
+        'year_built':'year_built',
+    }
+
+    def __init__(self):
+        Model.__init__(self)
+        LianJiaItem.__init__(self)
+

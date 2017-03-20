@@ -5,26 +5,26 @@ from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
 from scrapy.http import Request, HtmlResponse
 
+import items
+
 class AllCommunitySpider(scrapy.Spider):
 	name = 'all_community'
 	allowed_domains = ['cd.lianjia.com']
 
+	COMMUNITY_URL = 'http://cd.lianjia.com/xiaoqu/{}'
 	start_urls = (
-		'http://cd.lianjia.com/xiaoqu/',
+		COMMUNITY_URL.format(''),
 	)
 
 	def parse(self, response):
 		#第0阶段就这这里，爬取start_urls的结果
 
-		#meta = response.meta
-		#if meta.get('is_first_parse'):
-
 		def _handle(self=self, response=response):
-			community_xpath = '/html/body/div[4]/div[1]/ul/li[1]'
-			pack = lambda xpath, re_filter=None, default=None:(xpath, re_filter, default)
+			community_xpath = '/html/body/div[4]/div[1]/ul/li'
+			pack = lambda xpath, re_filter=None, default=None:(xpath, re_filter, default)#这个辅助解包用好
 			community_attr_map = {
 				#attr xpath, re_filter
-				'link':pack('div[2]/div[2]/a/@href',),
+				#'link':pack('div[2]/div[2]/a/@href',),#这里不能再添加根了，不能/divxx or /li/div
 				'id':pack('div[2]/div[2]/a/@href', r'(?P<extract>\d+)'),
 				'title':pack('div[1]/div[1]/a/text()',),
 				'count_on_sale':pack('div[2]/div[2]/a/span/text()',),
@@ -49,10 +49,19 @@ class AllCommunitySpider(scrapy.Spider):
 						except:
 							content = default
 					community_item[attr] = content
-				print 'parsing item', community_item
-				yield community_item
+				original_community_item = items.OriginalCommunityItem()
+				original_community_item.set_basic_data(community_item)
+				original_community_item.set_url(response.url)
+				yield original_community_item
 
-		return _handle()
+		for item in _handle():
+			yield item
 
-
-
+		meta = response.meta
+		if not meta.get('is_not_first_parse'):
+			COMMUNITY_COUNT_PER_PAGE = 30
+			total_count_xpath = '/html/body/div[4]/div[1]/div[2]/h2/span/text()'
+			total_count = float(response.xpath(total_count_xpath).extract_first())
+			total_pages = int(math.ceil(total_count / COMMUNITY_COUNT_PER_PAGE))
+			for page in xrange(2, total_pages + 1):
+				yield Request(self.COMMUNITY_URL.format('pg%s/' % page), meta={'is_not_first_parse':True})
