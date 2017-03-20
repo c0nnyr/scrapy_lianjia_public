@@ -11,15 +11,15 @@ class AllCommunitySpider(scrapy.Spider):
 	name = 'all_community'
 	allowed_domains = ['cd.lianjia.com']
 
-	COMMUNITY_URL = 'http://cd.lianjia.com/xiaoqu/{}'
+	COMMUNITY_URL = 'http://cd.lianjia.com/xiaoqu/{page}'
 	start_urls = (
-		COMMUNITY_URL.format(''),
+		COMMUNITY_URL.format(page=''),
 	)
 
 	def parse(self, response):
 		#第0阶段就这这里，爬取start_urls的结果
 
-		def _handle(self=self, response=response):
+		def handle(self=self, response=response):
 			community_xpath = '/html/body/div[4]/div[1]/ul/li'
 			pack = lambda xpath, re_filter=None, default=None:(xpath, re_filter, default)#这个辅助解包用好
 			community_attr_map = {
@@ -54,7 +54,7 @@ class AllCommunitySpider(scrapy.Spider):
 				original_community_item.set_url(response.url)
 				yield original_community_item
 
-		for item in _handle():
+		for item in handle():
 			yield item
 
 		meta = response.meta
@@ -64,4 +64,4 @@ class AllCommunitySpider(scrapy.Spider):
 			total_count = float(response.xpath(total_count_xpath).extract_first())
 			total_pages = int(math.ceil(total_count / COMMUNITY_COUNT_PER_PAGE))
 			for page in xrange(2, total_pages + 1):
-				yield Request(self.COMMUNITY_URL.format('pg%s/' % page), meta={'is_not_first_parse':True})
+				yield Request(self.COMMUNITY_URL.format(page='pg%s/' % page), meta={'is_not_first_parse':True})
