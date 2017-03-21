@@ -7,11 +7,15 @@
 
 import scrapy
 import datetime, os
-from sqlalchemy import Column, Integer, String, Text, Float, create_engine
+from sqlalchemy import Column, Integer, String, Text, Float, create_engine, and_, or_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 Model = declarative_base(name='Model')
+g_engine = create_engine('sqlite:///data.sqlite')
+Model.metadata.create_all(g_engine)
+g_session_marker = sessionmaker(bind=g_engine)
+g_session = g_session_marker()
 
 class LianJiaItem(dict):
     scrapy_time = scrapy.Field()#必须有一个这个,否则就会当做没有item,中断掉
@@ -30,7 +34,8 @@ class LianJiaItem(dict):
 
     @staticmethod
     def get_today_str():
-        return datetime.date.today().strftime('%y-%m-%d')
+        #return datetime.date.today().strftime('%y-%m-%d')
+        return (datetime.date.today() - datetime.timedelta(1)).strftime('%y-%m-%d')
 
 class CommunityItem(LianJiaItem, Model):
     __tablename__ = 'community'
@@ -70,3 +75,9 @@ class OriginalCommunityItem(LianJiaItem, Model):
     district = Column(Text())
     bizcircle = Column(Text())
     year_built = Column(Integer())
+
+    @staticmethod
+    def check_page_crawled(url, page_count):
+        return g_session and g_session.query(OriginalCommunityItem).filter(and_(OriginalCommunityItem.url==url, \
+               OriginalCommunityItem.date==OriginalCommunityItem.get_today_str())).count() == page_count
+

@@ -75,4 +75,8 @@ class AllCommunitySpider(scrapy.Spider):
 			total_count = float(response.xpath(total_count_xpath).extract_first())
 			total_pages = int(math.ceil(total_count / COMMUNITY_COUNT_PER_PAGE))
 			for page in xrange(2, total_pages + 1):
-				yield Request(self.COMMUNITY_URL.format(page='pg%s/' % page), meta={'is_not_first_parse':True})
+				url = self.COMMUNITY_URL.format(page='pg%s/' % page)
+				if items.OriginalCommunityItem.check_page_crawled(url, COMMUNITY_COUNT_PER_PAGE):
+					print 'has crawled already', url
+					continue
+				yield Request(url, meta={'is_not_first_parse':True})
