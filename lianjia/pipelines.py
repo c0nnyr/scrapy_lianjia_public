@@ -8,25 +8,20 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import items
+import dbhelper as db
 
 class LianjiaPipeline(object):
 
     def open_spider(self, spider):
-        #self.engine = create_engine('sqlite:///data.sqlite')
-        #items.Model.metadata.create_all(self.engine)
-        #session_marker = sessionmaker(bind=self.engine)
-        #self.session = session_marker()
-
         self.json_file = open('data.json', 'w')
 
     def close_spider(self, spider):
-        items.g_session.close()
         self.json_file.close()
 
     def process_item(self, item, spider):
         #保存数据库
-        items.g_session.merge(item)
-        items.g_session.commit()
+        db.session.merge(item)
+        db.session.commit()
 
         #保存json文件
         self.json_file.write(item.original_data)

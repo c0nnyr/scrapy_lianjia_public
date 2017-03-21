@@ -10,12 +10,7 @@ import datetime, os
 from sqlalchemy import Column, Integer, String, Text, Float, create_engine, and_, or_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-
-Model = declarative_base(name='Model')
-g_engine = create_engine('sqlite:///data.sqlite')
-Model.metadata.create_all(g_engine)
-g_session_marker = sessionmaker(bind=g_engine)
-g_session = g_session_marker()
+import dbhelper as db
 
 class LianJiaItem(dict):
     scrapy_time = scrapy.Field()#必须有一个这个,否则就会当做没有item,中断掉
@@ -37,14 +32,14 @@ class LianJiaItem(dict):
         #return datetime.date.today().strftime('%y-%m-%d')
         return (datetime.date.today() - datetime.timedelta(1)).strftime('%y-%m-%d')
 
-class CommunityItem(LianJiaItem, Model):
+class CommunityItem(LianJiaItem, db.Model):
     __tablename__ = 'community'
 
     house_count_on_sale = Column(Integer())
     house_ids_on_sale = Column(Text())
     uuid = Column(Text())
 
-class HouseItem(LianJiaItem, Model):
+class HouseItem(LianJiaItem, db.Model):
     __tablename__ = 'house'
 
     house_type = Column(Text())
@@ -61,11 +56,11 @@ class HouseItem(LianJiaItem, Model):
     title = Column(Text())
     uuid = Column(Text())
 
-class HouseStateItem(LianJiaItem, Model):
+class HouseStateItem(LianJiaItem, db.Model):
     __tablename__ = 'house_state'
     see_count = Column(Integer())
 
-class OriginalCommunityItem(LianJiaItem, Model):
+class OriginalCommunityItem(LianJiaItem, db.Model):
     __tablename__ = 'original_community'
     title = Column(Text())
     count_on_sale = Column(Integer())
@@ -78,6 +73,22 @@ class OriginalCommunityItem(LianJiaItem, Model):
 
     @staticmethod
     def check_page_crawled(url, page_count):
-        return g_session and g_session.query(OriginalCommunityItem).filter(and_(OriginalCommunityItem.url==url, \
+        return db.session and db.session.query(OriginalCommunityItem).filter(and_(OriginalCommunityItem.url==url, \
                OriginalCommunityItem.date==OriginalCommunityItem.get_today_str())).count() == page_count
 
+class DealItem(LianJiaItem, db.Model):
+    __tablename__ = 'deal_item'
+
+    title = Column(Text())
+    total_price = Column(Text())
+    price_per_sm = Column(Text())
+    deal_by = Column(Text())
+    description = Column(Text())
+    description2 = Column(Text())
+    district_description = Column(Text())
+    price_when_on = Column(Text())
+    days_when_sale = Column(Text())
+
+    @staticmethod
+    def check_page_crawled(url, page_count):
+        return False
