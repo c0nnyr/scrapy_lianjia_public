@@ -13,10 +13,12 @@ import dbhelper as db
 class LianjiaPipeline(object):
 
     def open_spider(self, spider):
-        self.json_file = open('data.json', 'w')
+        #self.json_file = open('data.json', 'w')
+        pass
 
     def close_spider(self, spider):
-        self.json_file.close()
+        #self.json_file.close()
+        pass
 
     def process_item(self, item, spider):
         #保存数据库
@@ -24,8 +26,8 @@ class LianjiaPipeline(object):
         db.session.commit()
 
         #保存json文件
-        self.json_file.write(item.original_data)
-        self.json_file.write('\n')
-        self.json_file.flush()
+        #self.json_file.write(item.original_data)
+        #self.json_file.write('\n')
+        #self.json_file.flush()
 
         return item

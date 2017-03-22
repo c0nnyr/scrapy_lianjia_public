@@ -94,5 +94,6 @@ class DealItem(LianJiaItem, Model):
     district_description = Column(Text())
     price_when_on = Column(Text())
     days_when_sale = Column(Text())
+    page = Column(Integer())
 
 Model.metadata.create_all(db.engine)#类型建立后,才能这样建立表

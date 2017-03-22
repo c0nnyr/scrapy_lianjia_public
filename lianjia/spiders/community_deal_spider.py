@@ -11,50 +11,40 @@ class CommunityDealSpider(base_spider.BaseSpider):
 	name = 'deal_community'
 	allowed_domains = ['cd.lianjia.com']
 
-	COMMUNITY_DEAL_URL = 'http://cd.lianjia.com/chengjiao/{page}c{rid}/'
+	COMMUNITY_DEAL_URL = 'http://cd.lianjia.com/chengjiao/{page}c%s/'
 
 	def __init__(self, rid=None):
 		super(CommunityDealSpider, self).__init__()
-		rid = 1611041529992#望江嘉园
+		self.rid = 1611041529992#望江嘉园
 		self.start_urls = (
-			self.COMMUNITY_DEAL_URL.format(page='', rid=rid),
+			self.COMMUNITY_DEAL_URL.format(page='') % self.rid,
 		)
 
 	def parse(self, response):
 		#第0阶段就这这里，爬取start_urls的结果
 
-		house_xpath = '/html/body/div[4]/div[1]/ul/li'
-		pack = lambda xpath, re_filter=None, default=0:(xpath, re_filter, default)#这个辅助解包用好, default为0,方便转换成整数\浮点数\字符串
-		house_attr_map = {
+		item_xpath = '/html/body/div[4]/div[1]/ul/li'
+		attr_map = {
 			#attr xpath, re_filter
 			#'link':pack('div[2]/div[2]/a/@href',),#这里不能再添加根了，不能/divxx or /li/div
-			'id':pack('div/div[1]/a/@href', r'(?P<extract>\d+)'),
-			'url':pack('div/div[1]/a/@href', ),
-			'title':pack('div/div[1]/a/text()',),
-			'date':pack('div/div[2]/div[2]/text()',),
-			'total_price':pack('div/div[2]/div[3]/span/text()',),
-			'price_per_sm':pack('div/div[3]/div[3]/span/text()',),
-			'deal_by':pack('div/div[3]/div[2]/text()',),
-			'description':pack('div/div[2]/div[1]/text()',),
-			'description2':pack('div/div[3]/div[1]/text()',),
-			'district_description':pack('div/div[4]/span[2]/span/text()',),
-			'price_when_on':pack('div/div[5]/span[2]/span[1]/text()', r'(?P<extract>\d+)'),
-			'days_when_sale':pack('div/div[5]/span[2]/span[2]/text()', r'(?P<extract>\d+)'),
+			'id':self.pack('div/div[1]/a/@href', r'(?P<extract>\d+)'),
+			'url':self.pack('div/div[1]/a/@href', ),
+			'title':self.pack('div/div[1]/a/text()',),
+			'date':self.pack('div/div[2]/div[2]/text()',),
+			'total_price':self.pack('div/div[2]/div[3]/span/text()',),
+			'price_per_sm':self.pack('div/div[3]/div[3]/span/text()',),
+			'deal_by':self.pack('div/div[3]/div[2]/text()',),
+			'description':self.pack('div/div[2]/div[1]/text()',),
+			'description2':self.pack('div/div[3]/div[1]/text()',),
+			'district_description':self.pack('div/div[4]/span[2]/span/text()',),
+			'price_when_on':self.pack('div/div[5]/span[2]/span[1]/text()', r'(?P<extract>\d+)'),
+			'days_when_sale':self.pack('div/div[5]/span[2]/span[2]/text()', r'(?P<extract>\d+)'),
 		}
 
-		self._parse_items()
-		#正式开始解析
-		yield items.DealItem(dct)
+		for item in self._parse_items(response, item_xpath, attr_map, items.DealItem, self.add_page):
+			yield item
 
-		meta = response.meta
-		if not meta.get('is_not_first_parse'):
-			DEAL_COUNT_PER_PAGE = 30
-			total_count_xpath = '/html/body/div[4]/div[1]/div[2]/div[1]/span/text()'
-			total_count = float(response.xpath(total_count_xpath).extract_first())
-			total_pages = int(math.ceil(total_count / DEAL_COUNT_PER_PAGE))
-			for page in xrange(2, total_pages + 1):
-				url = self.COMMUNITY_DEAL_URL.format(page='pg%s' % page)
-				if items.DealItem.check_page_crawled(url, DEAL_COUNT_PER_PAGE):
-					print 'has crawled already', url
-					continue
-				yield Request(url, meta={'is_not_first_parse':True})
+		for r in self._parse_pages(response, self.COMMUNITY_DEAL_URL % self.rid, '/html/body/div[4]/div[1]/div[2]/div[1]/span/text()', 30, items.DealItem):
+			#这里虽然提供了一个总小区个数,但是只提供了100页可以浏览....
+			yield r
+
