@@ -27,48 +27,41 @@ class CommunitySpider(scrapy.Spider):
 
 	def parse(self, response):
 		#parse初始的url,返回小区的信息
-		def handle_community(self=self, response=response):
-			print 'parsing community', response.url
-			search_result = re.search(self.COMMUNITY_ITEM_INFO_RE, response.body)
-			if not search_result:
-				print 'cj==>cannot succesfully extract community item in start url'
-				return
-			dct = self._handle_js_object(search_result.group('extract'))
+		start_url = response.meta.get('start_url', response.url)
+		print 'parsing community', response.url
+		search_result = re.search(self.COMMUNITY_ITEM_INFO_RE, response.body)
+		if not search_result:
+			print 'cj==>cannot succesfully extract community item in start url'
+			return
+		dct = self._handle_js_object(search_result.group('extract'))
 
-			community = items.CommunityItem(
-				house_count_on_sale=dct['count'],
-				house_ids_on_sale=dct['ids'],
-				uuid=dct['uuid'],
+		community_item = items.CommunityItem(
+			house_count_on_sale=dct['count'],
+			house_ids_on_sale=dct['ids'],
+			uuid=dct['uuid'],
 
-				id=dct['cid'],
-				start_url=self.start_urls[0],
-				url=response.url,
-				original_data=str(dct),
-			)
-			return community
-
-		community_item = handle_community()
+			id=dct['cid'],
+			start_url=start_url,
+			url=response.url,
+			original_data=str(dct),
+		)
 		if not community_item:
 			return
 		yield community_item
 
-		def handle_house(self=self, response=response):
-			house_url_xpath = '/html/body/div[4]/div[1]/ul/li/div[1]/div[1]/a/@href'
-			for url in response.xpath(house_url_xpath).extract():
-				yield Request(url=url, callback=self.parse_house_1)
-				hid = re.search(r'\d+', url).group(0)
-				yield Request(url=self.HOURSE_STATE_URL.format(rid=self.rid, hid=hid), callback=self.parse_house_state_1, meta={'hid':hid})
-		for item in handle_house():
-			yield item
+		##################
+		house_url_xpath = '/html/body/div[4]/div[1]/ul/li/div[1]/div[1]/a/@href'
+		for url in response.xpath(house_url_xpath).extract():
+			hid = re.search(r'\d+', url).group(0)
+			yield Request(url=url, callback=self.parse_house_1, meta={'hid':hid, 'start_url':start_url})
+			yield Request(url=self.HOURSE_STATE_URL.format(rid=self.rid, hid=hid), callback=self.parse_house_state_1, meta={'hid':hid, 'start_url':start_url})
 
-		def handle_continue_community(self=self, response=response):
-			if not response.meta.get('is_not_first_parse'):
-				count = float(community_item.house_count_on_sale)
-				page_count = int(math.ceil(count / self.HOUSE_ITEM_COUNT_PER_PAGE))
-				for page in xrange(2, page_count + 1):
-					yield Request(url=self.RESBLOCK_URL.format(rid=self.rid, page='pg%d' % page), meta={'is_not_first_parse':True})
-		for r in handle_continue_community():
-			yield r
+		##################
+		if not response.meta.get('page'):
+			count = float(community_item.house_count_on_sale)
+			page_count = int(math.ceil(count / self.HOUSE_ITEM_COUNT_PER_PAGE))
+			for page in xrange(2, page_count + 1):
+				yield Request(url=self.RESBLOCK_URL.format(rid=self.rid, page='pg%d' % page), meta={'page':page, 'start_url':start_url})
 
 	def parse_house_1(self, response):
 		print 'parsing house', response.url
@@ -77,7 +70,7 @@ class CommunitySpider(scrapy.Spider):
 			print 'cj==>cannot succesfully extract house item'
 			return
 		dct = self._handle_js_object(search_result.group('extract'))
-		house = items.HouseItem(
+		return items.HouseItem(
 			house_type=dct['houseType'],
 			house_size=dct['area'],
 			register_time=dct['registerTime'],
@@ -94,8 +87,8 @@ class CommunitySpider(scrapy.Spider):
 			id=dct['houseId'],
 			url=response.url,
 			original_data=str(dct),
+			start_url=response.meta.get('start_url'),
 		)
-		return house
 
 	def parse_house_state_1(self, response):
 		print 'parsing house state', response.url
@@ -103,14 +96,14 @@ class CommunitySpider(scrapy.Spider):
 		dct = json.loads(response.body)
 		dct['id'] = hid
 		dct['see_count'] = dct['data']['seeRecord']['totalCnt']
-		state = items.HouseStateItem(
+		return items.HouseStateItem(
 			see_count=dct['see_count'],
 
 			id=dct['id'],
 			url=response.url,
 			original_data=str(dct),
+			start_url=response.meta.get('start_url'),
 		)
-		return state
 
 	@staticmethod
 	def _handle_js_object(s):
