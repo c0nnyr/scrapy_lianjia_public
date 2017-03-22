@@ -8,7 +8,7 @@ from scrapy.http import Request, HtmlResponse
 import items
 
 class CommunityDealSpider(scrapy.Spider):
-	name = 'all_community'
+	name = 'deal_community'
 	allowed_domains = ['cd.lianjia.com']
 
 	COMMUNITY_DEAL_URL = 'http://cd.lianjia.com/chengjiao/{page}c{rid}/'
@@ -25,11 +25,12 @@ class CommunityDealSpider(scrapy.Spider):
 
 		def handle(self=self, response=response):
 			house_xpath = '/html/body/div[4]/div[1]/ul/li'
-			pack = lambda xpath, re_filter=None, default=None:(xpath, re_filter, default)#这个辅助解包用好
+			pack = lambda xpath, re_filter=None, default=0:(xpath, re_filter, default)#这个辅助解包用好, default为0,方便转换成整数\浮点数\字符串
 			house_attr_map = {
 				#attr xpath, re_filter
 				#'link':pack('div[2]/div[2]/a/@href',),#这里不能再添加根了，不能/divxx or /li/div
 				'id':pack('div/div[1]/a/@href', r'(?P<extract>\d+)'),
+				'url':pack('div/div[1]/a/@href', ),
 				'title':pack('div/div[1]/a/text()',),
 				'date':pack('div/div[2]/div[2]/text()',),
 				'total_price':pack('div/div[2]/div[3]/span/text()',),
@@ -55,22 +56,8 @@ class CommunityDealSpider(scrapy.Spider):
 						except:
 							content = default
 					dct[attr] = content
-				yield items.DealItem(
-					title = dct['title'],
-					date = dct['date'],
-					total_price = dct['total_price'],
-					price_per_sm = dct['price_per_sm'],
-					deal_by = dct['deal_by'],
-					description = dct['description'],
-					description2 = dct['description2'],
-					district_description = dct['district_description'],
-					price_when_on = dct['price_when_on'],
-					days_when_sale = dct['days_when_sale'],
-
-					id=dct['id'],
-					url=response.url,
-					original_data=str(dct),
-				)
+				dct['original_data'] = str(dct)
+				yield items.DealItem(dct)
 
 		for item in handle():
 			yield item

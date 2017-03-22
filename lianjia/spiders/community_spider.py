@@ -41,6 +41,7 @@ class CommunitySpider(scrapy.Spider):
 				uuid=dct['uuid'],
 
 				id=dct['cid'],
+				start_url=self.start_urls[0],
 				url=response.url,
 				original_data=str(dct),
 			)

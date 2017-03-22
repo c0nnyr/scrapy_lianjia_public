@@ -11,10 +11,13 @@ from sqlalchemy import Column, Integer, String, Text, Float, create_engine, and_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import dbhelper as db
+Model = declarative_base(name='Model')
 
 class LianJiaItem(dict):
-    scrapy_time = scrapy.Field()#必须有一个这个,否则就会当做没有item,中断掉
+    scrapy_date = scrapy.Field()#必须有一个这个Field,否则就会当做没有item,中断掉
+    scrapy_id = scrapy.Field()
 
+    start_url = Column(Text())
     url = Column(Text())
     original_data = Column(Text())
     date = Column(Text(), primary_key=True)
@@ -22,24 +25,31 @@ class LianJiaItem(dict):
 
     def __init__(self, **kwargs):
         super(LianJiaItem, self).__init__()
+        assert all((k in kwargs) for k in ('start_url', 'url', 'original_data', 'id')), "must contain keys 'start_url', 'url', 'original_data', 'id'"
         self.date = self.get_today_str()
-        self['scrapy_time'] = self.get_today_str()
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
 
+        self['scrapy_date'] = self.date
+        self['scrapy_id'] = self.id
+
     @staticmethod
     def get_today_str():
-        #return datetime.date.today().strftime('%y-%m-%d')
-        return (datetime.date.today() - datetime.timedelta(1)).strftime('%y-%m-%d')
+        return datetime.date.today().strftime('%y-%m-%d')
 
-class CommunityItem(LianJiaItem, db.Model):
+    @classmethod
+    def check_page_crawled(cls, page, page_count, start_url):
+        assert hasattr(cls, 'page'), 'must exist attr page'
+        return db.session and db.session.query(cls).filter(and_(cls.start_url==start_url, cls.page==page, cls.date==cls.get_today_str())).count() == page_count
+
+class CommunityItem(LianJiaItem, Model):
     __tablename__ = 'community'
 
     house_count_on_sale = Column(Integer())
     house_ids_on_sale = Column(Text())
     uuid = Column(Text())
 
-class HouseItem(LianJiaItem, db.Model):
+class HouseItem(LianJiaItem, Model):
     __tablename__ = 'house'
 
     house_type = Column(Text())
@@ -56,11 +66,11 @@ class HouseItem(LianJiaItem, db.Model):
     title = Column(Text())
     uuid = Column(Text())
 
-class HouseStateItem(LianJiaItem, db.Model):
+class HouseStateItem(LianJiaItem, Model):
     __tablename__ = 'house_state'
     see_count = Column(Integer())
 
-class OriginalCommunityItem(LianJiaItem, db.Model):
+class OriginalCommunityItem(LianJiaItem, Model):
     __tablename__ = 'original_community'
     title = Column(Text())
     count_on_sale = Column(Integer())
@@ -70,13 +80,9 @@ class OriginalCommunityItem(LianJiaItem, db.Model):
     district = Column(Text())
     bizcircle = Column(Text())
     year_built = Column(Integer())
+    page = Column(Integer())
 
-    @staticmethod
-    def check_page_crawled(url, page_count):
-        return db.session and db.session.query(OriginalCommunityItem).filter(and_(OriginalCommunityItem.url==url, \
-               OriginalCommunityItem.date==OriginalCommunityItem.get_today_str())).count() == page_count
-
-class DealItem(LianJiaItem, db.Model):
+class DealItem(LianJiaItem, Model):
     __tablename__ = 'deal_item'
 
     title = Column(Text())
@@ -89,6 +95,4 @@ class DealItem(LianJiaItem, db.Model):
     price_when_on = Column(Text())
     days_when_sale = Column(Text())
 
-    @staticmethod
-    def check_page_crawled(url, page_count):
-        return False
+Model.metadata.create_all(db.engine)#类型建立后,才能这样建立表
