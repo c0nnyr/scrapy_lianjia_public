@@ -5,9 +5,9 @@ from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
 from scrapy.http import Request, HtmlResponse
 
-import items
+import items, base_spider
 
-class CommunityDealSpider(scrapy.Spider):
+class CommunityDealSpider(base_spider.BaseSpider):
 	name = 'deal_community'
 	allowed_domains = ['cd.lianjia.com']
 
@@ -23,44 +23,28 @@ class CommunityDealSpider(scrapy.Spider):
 	def parse(self, response):
 		#第0阶段就这这里，爬取start_urls的结果
 
-		def handle(self=self, response=response):
-			house_xpath = '/html/body/div[4]/div[1]/ul/li'
-			pack = lambda xpath, re_filter=None, default=0:(xpath, re_filter, default)#这个辅助解包用好, default为0,方便转换成整数\浮点数\字符串
-			house_attr_map = {
-				#attr xpath, re_filter
-				#'link':pack('div[2]/div[2]/a/@href',),#这里不能再添加根了，不能/divxx or /li/div
-				'id':pack('div/div[1]/a/@href', r'(?P<extract>\d+)'),
-				'url':pack('div/div[1]/a/@href', ),
-				'title':pack('div/div[1]/a/text()',),
-				'date':pack('div/div[2]/div[2]/text()',),
-				'total_price':pack('div/div[2]/div[3]/span/text()',),
-				'price_per_sm':pack('div/div[3]/div[3]/span/text()',),
-				'deal_by':pack('div/div[3]/div[2]/text()',),
-				'description':pack('div/div[2]/div[1]/text()',),
-				'description2':pack('div/div[3]/div[1]/text()',),
-				'district_description':pack('div/div[4]/span[2]/span/text()',),
-				'price_when_on':pack('div/div[5]/span[2]/span[1]/text()', r'(?P<extract>\d+)'),
-				'days_when_sale':pack('div/div[5]/span[2]/span[2]/text()', r'(?P<extract>\d+)'),
-			}
+		house_xpath = '/html/body/div[4]/div[1]/ul/li'
+		pack = lambda xpath, re_filter=None, default=0:(xpath, re_filter, default)#这个辅助解包用好, default为0,方便转换成整数\浮点数\字符串
+		house_attr_map = {
+			#attr xpath, re_filter
+			#'link':pack('div[2]/div[2]/a/@href',),#这里不能再添加根了，不能/divxx or /li/div
+			'id':pack('div/div[1]/a/@href', r'(?P<extract>\d+)'),
+			'url':pack('div/div[1]/a/@href', ),
+			'title':pack('div/div[1]/a/text()',),
+			'date':pack('div/div[2]/div[2]/text()',),
+			'total_price':pack('div/div[2]/div[3]/span/text()',),
+			'price_per_sm':pack('div/div[3]/div[3]/span/text()',),
+			'deal_by':pack('div/div[3]/div[2]/text()',),
+			'description':pack('div/div[2]/div[1]/text()',),
+			'description2':pack('div/div[3]/div[1]/text()',),
+			'district_description':pack('div/div[4]/span[2]/span/text()',),
+			'price_when_on':pack('div/div[5]/span[2]/span[1]/text()', r'(?P<extract>\d+)'),
+			'days_when_sale':pack('div/div[5]/span[2]/span[2]/text()', r'(?P<extract>\d+)'),
+		}
 
-			#正式开始解析
-			house_sel_items = response.xpath(house_xpath)
-			for sel in house_sel_items:
-				dct = {}
-				for attr, item in house_attr_map.iteritems():
-					xpath, re_filter, default = item
-					content = ''.join(sel.xpath(xpath).extract())#对于year_built，有多项
-					if re_filter:
-						try:
-							content = re.search(re_filter, content).group('extract')
-						except:
-							content = default
-					dct[attr] = content
-				dct['original_data'] = str(dct)
-				yield items.DealItem(dct)
-
-		for item in handle():
-			yield item
+		self._parse_items()
+		#正式开始解析
+		yield items.DealItem(dct)
 
 		meta = response.meta
 		if not meta.get('is_not_first_parse'):

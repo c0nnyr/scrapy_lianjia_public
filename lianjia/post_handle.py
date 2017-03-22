@@ -2,7 +2,9 @@
 
 import items
 import dbhelper as db
+import re
 
 for item in db.session.query(items.OriginalCommunityItem).all():
-    print item
-    break
+    item.start_url = re.sub('pg\d*', '', item.start_url)
+    db.session.merge(item)
+    db.session.commit()
