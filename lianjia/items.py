@@ -96,4 +96,8 @@ class DealItem(LianJiaItem, Model):
     days_when_sale = Column(Text())
     page = Column(Integer())
 
+    @classmethod
+    def is_already_crawled(cls, id, date):
+        return db.session and db.session.query(cls).filter(and_(cls.id==id, cls.date==date)).count() == 1
+
 Model.metadata.create_all(db.engine)#类型建立后,才能这样建立表

@@ -13,9 +13,10 @@ class CommunityDealSpider(base_spider.BaseSpider):
 
 	COMMUNITY_DEAL_URL = 'http://cd.lianjia.com/chengjiao/{page}c%s/'
 
-	def __init__(self, rid=None):
+	def __init__(self, rid):
 		super(CommunityDealSpider, self).__init__()
-		self.rid = 1611041529992#望江嘉园
+		#self.rid = 1611041529992
+		self.rid = rid# or 1611041529992#望江嘉园
 		self.start_urls = (
 			self.COMMUNITY_DEAL_URL.format(page='') % self.rid,
 		)
@@ -42,6 +43,9 @@ class CommunityDealSpider(base_spider.BaseSpider):
 		}
 
 		for item in self._parse_items(response, item_xpath, attr_map, items.DealItem, self.add_page):
+			if items.DealItem.is_already_crawled(item.id, item.date):
+				print 'already crawled, stop now', item.id, item.date
+				return
 			yield item
 
 		for r in self._parse_pages(response, self.COMMUNITY_DEAL_URL % self.rid, '/html/body/div[4]/div[1]/div[2]/div[1]/span/text()', 30, items.DealItem):
