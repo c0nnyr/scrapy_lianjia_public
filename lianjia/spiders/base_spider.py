@@ -36,8 +36,8 @@ class BaseSpider(scrapy.Spider):
     def _parse_pages(self, response, url_template, total_count_xpath, count_per_page, item_cls):
         meta = response.meta
         if not meta.get('page'):
-            total_count = float(response.xpath(total_count_xpath).extract_first())
-            total_pages = min(int(math.ceil(total_count / count_per_page)), 100)#最多允许爬去100页
+            total_count = int(response.xpath(total_count_xpath).extract_first())
+            total_pages = min(int(math.ceil(float(total_count) / count_per_page)), 100) if total_count != 0 else 0#最多允许爬去100页
             print 'find total pages', total_pages
             for page in xrange(2, total_pages + 1):
                 url = url_template.format(page='pg%s' % page)
