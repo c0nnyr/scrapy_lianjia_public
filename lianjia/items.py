@@ -34,8 +34,8 @@ class LianJiaItem(dict):
         self['scrapy_id'] = self.id
 
     @staticmethod
-    def get_today_str():
-        return datetime.date.today().strftime('%y-%m-%d')
+    def get_today_str(delta=0):
+        return (datetime.date.today() + datetime.timedelta(delta)).strftime('%y-%m-%d')
 
     @classmethod
     def check_page_crawled(cls, page, page_count, start_url):

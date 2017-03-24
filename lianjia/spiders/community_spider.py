@@ -4,9 +4,10 @@ import scrapy, json, re, math
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
 from scrapy.http import Request, HtmlResponse
+from base_spider import BaseSpider, check_validate
 
 import items
-class CommunitySpider(scrapy.Spider):
+class CommunitySpider(BaseSpider):
 	name = 'community'
 	allowed_domains = ['cd.lianjia.com']
 
@@ -25,6 +26,7 @@ class CommunitySpider(scrapy.Spider):
 		self.start_urls = (self.RESBLOCK_URL.format(rid=rid, page=''), )
 		self.rid = rid
 
+	@check_validate
 	def parse(self, response):
 		#parse初始的url,返回小区的信息
 		start_url = response.meta.get('start_url', response.url)

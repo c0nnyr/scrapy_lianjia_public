@@ -48,6 +48,7 @@ class CommunityDealSpider(base_spider.BaseSpider):
 				return
 			yield item
 
+		'/html/body/div[3]/div[1]/div[2]/div[1]/span'
 		for r in self._parse_pages(response, self.COMMUNITY_DEAL_URL % self.rid, '/html/body/div[4]/div[1]/div[2]/div[1]/span/text()', 30, items.DealItem):
 			#这里虽然提供了一个总小区个数,但是只提供了100页可以浏览....
 			yield r
