@@ -10,7 +10,6 @@ import base_spider
 
 class AllCommunitySpider(base_spider.BaseSpider):
 	name = 'all_community'
-	allowed_domains = ['cd.lianjia.com']
 
 	COMMUNITY_URL = 'http://cd.lianjia.com/xiaoqu/{page}p%s/'
 	start_urls = (

@@ -9,12 +9,11 @@ from base_spider import BaseSpider, check_validate
 import items
 class CommunitySpider(BaseSpider):
 	name = 'community'
-	allowed_domains = ['cd.lianjia.com']
 
 	RESBLOCK_URL = 'http://cd.lianjia.com/ershoufang/{page}c{rid}/'
 	HOURSE_STATE_URL = 'http://cd.lianjia.com/ershoufang/housestat?hid={hid}&rid={rid}'
 
-	COMMUNITY_ITEM_INFO_RE = r'''require\(\['ershoufang/sellList/index'\],\s*?function\s*?\(main\)\s*?\{\s*?main\((?P<extract>(\s|\S)*?)\);\s*?\}\);'''
+	COMMUNITY_ITEM_INFO_RE = r'''require\(\['ershoufang/sellList/index'\],\s*?function\s*?\(main\)\s*?\{\s*?main\((?P<(\s|\S)*?)\);\s*?\}\);'''
 	HOUSE_ITEM_INFO_RE = r'''require\(\['ershoufang/sellDetail/detailV3'\],\s*?function\s*?\(init\)\s*?\{\s*init\((?P<extract>(\s|\S)*?)\);\s*?\}\);'''#放在最后的script里面的
 
 	HOUSE_ITEM_COUNT_PER_PAGE = 30

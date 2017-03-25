@@ -37,7 +37,7 @@ def crawl_deal_community():
 	def crawl():
 		original_items = db.session.query(items.OriginalCommunityItem).filter(and_(items.OriginalCommunityItem.start_url.like('%/{}/%'.format(crawl_level)), items.OriginalCommunityItem.date == '17-03-22'))\
 			.all()
-		for ind, item in enumerate(original_items[1129:2000], start=1129):
+		for ind, item in enumerate(original_items[1247:2000], start=1247):
 			print 'scrapying deal items for', item.id, ind
 			yield runner.crawl(community_deal_spider.CommunityDealSpider, item.id)
 		reactor.stop()
@@ -51,5 +51,5 @@ def diff_community():
 
 #crawl_community()
 #crawl_all_community()
-#crawl_deal_community()
-diff_community()
+crawl_deal_community()
+#diff_community()

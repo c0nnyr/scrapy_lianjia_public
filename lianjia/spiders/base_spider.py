@@ -3,30 +3,35 @@
 import scrapy, json, re, math
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
-from scrapy.http import Request, HtmlResponse
+from scrapy.http import Request, HtmlResponse, FormRequest
+from six.moves.urllib.parse import unquote
 
 import items, functools, types
 
+def handle_val_or_gen(func, self, response):
+	ret = func(self, response)
+	if isinstance(ret, types.GeneratorType):
+		for r in ret:
+			yield r
+	else:
+		yield ret
 def check_validate(func):
 	@functools.wraps(func)
 	def _func(self, response):
 		need_validate = False
-		for r in self.try_validate(response):
+		for r in self.try_validate(response, functools.partial(func, self)):
 			need_validate = True
 			yield r
 		if not need_validate:
-			ret = func(self, response)
-			if isinstance(ret, types.GeneratorType):
-				for r in ret:
-					yield r
-			else:
-				yield ret
+			for r in handle_val_or_gen(func, self, response):
+				yield r
 	return _func
 
 class BaseSpider(scrapy.Spider):
 	name = 'must_change_this_name'
+	allowed_domains = ['cd.lianjia.com', 'captcha.lianjia.com']
 
-	VALIDATE_IMG_URL = 'http://captcha.lianjia.com/human/'
+	VALIDATE_IMG_URL = 'http://captcha.lianjia.com/human'
 
 	@staticmethod
 	def pack(xpath, re_filter=None, default=0):
@@ -76,15 +81,39 @@ class BaseSpider(scrapy.Spider):
 		return dct
 
 
-	def try_validate(self, response):
-		if 'captcha.lianjia.com/' not in response.url:
-			return
-		else:
-			csrf_xpath = '/html/body/div/div[2]/div[1]/ul/form/input[3]/@value'#does not work, cannot find form
-			csrf = response.xpath(csrf_xpath).extract_first()
-			yield Request(self.VALIDATE_IMG_URL, callback=self._parse_validate_imgs, meta={'csrf':csrf})
+	def try_validate(self, response, func):
+		if 'captcha.lianjia.com/' in response.url:
+			print 'validating...'
+			#csrf_xpath = '/html/body/div/div[2]/div[1]/ul/form/input[3]/@value'#does not work, cannot find form
+			#csrf = response.xpath(csrf_xpath).extract_first()
+			#似乎form不太好用xpath处理
+			try:
+				csrf = re.search(r'name="_csrf" value="(?P<extract>\S*?)"', response.body).group('extract')
+				url = unquote(re.search(r'redirect=(?P<extract>.*)', response.url).group('extract'))
+				print 'original_url', url
+				meta = {'_validate_csrf':csrf, '_validate_func':func, '_validate_url':url}
+				meta.update(response.meta)
+				yield Request(self.VALIDATE_IMG_URL, callback=self._parse_validate_imgs, meta=meta, dont_filter=True)#不参与去重
+			except:
+				print 'cannot find csrf in ', response.body
 
 	def _parse_validate_imgs(self, response):
-		print response.body, response.url, response.meta
-		pass
+		dct = json.loads(response.body)
+		csrf = response.meta.get('_validate_csrf')
+		formdata = {'_csrf':csrf, 'uuid':dct['uuid'], 'bitvalue':'2'}
+		meta = {'_validate_csrf':csrf, '_validate_func':response.meta.get('_validate_func'), '_validate_url':response.meta.get('_validate_url')}
+		meta.update(response.meta)
+		yield FormRequest(self.VALIDATE_IMG_URL, callback=self._try_validate_once, formdata=formdata, meta=meta, dont_filter=True)
+
+	def _try_validate_once(self, response):
+		print response.body, response.url
+		if '"error":true' in response.body:
+			csrf = response.meta.get('_validate_csrf')
+			meta = {'_validate_csrf':csrf, '_validate_func':response.meta.get('_validate_func'), '_validate_url':response.meta.get('_validate_url')}
+			meta.update(response.meta)
+			yield Request(self.VALIDATE_IMG_URL, callback=self._parse_validate_imgs, meta=meta, dont_filter=True)
+		else:
+			print 'finish validating'
+			func = response.meta.get('_validate_func')
+			yield Request(response.meta.get('_validate_url'), callback=func, meta=response.meta)
 

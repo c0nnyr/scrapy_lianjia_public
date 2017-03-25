@@ -9,7 +9,6 @@ import items, base_spider
 
 class CommunityDealSpider(base_spider.BaseSpider):
 	name = 'deal_community'
-	allowed_domains = ['cd.lianjia.com']
 
 	COMMUNITY_DEAL_URL = 'http://cd.lianjia.com/chengjiao/{page}c%s/'
 
@@ -21,6 +20,7 @@ class CommunityDealSpider(base_spider.BaseSpider):
 			self.COMMUNITY_DEAL_URL.format(page='') % self.rid,
 		)
 
+	@base_spider.check_validate
 	def parse(self, response):
 		#第0阶段就这这里，爬取start_urls的结果
 
