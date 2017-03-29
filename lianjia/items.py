@@ -57,7 +57,6 @@ class HouseItem(LianJiaItem, Model):
     register_time = Column(Text())
     total_price = Column(Integer())
     price = Column(Float())
-    id = Column(Integer(), primary_key=True)
     resblock_id = Column(Integer())
     resblock_name = Column(Text())
     is_removed = Column(Integer())

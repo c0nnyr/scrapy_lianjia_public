@@ -51,5 +51,5 @@ def diff_community():
 
 #crawl_community()
 #crawl_all_community()
-crawl_deal_community()
-#diff_community()
+#crawl_deal_community()
+diff_community()
